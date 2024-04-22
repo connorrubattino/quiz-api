@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
-import { UserRegistrationFormDataType } from '../types';
+import { UserFormDataType, CategoryType } from '../types';
 import { register } from '../lib/apiWrapper';
+import { useNavigate } from 'react-router-dom';
+import InputGroup from 'react-bootstrap/InputGroup';
 
-type SignUpProps = {}
+type SignUpProps = {
+    flashMessage: (newMessage:string|undefined, newCategory:CategoryType|undefined) => void
+}
 
-export default function SignUp({}: SignUpProps) {
+export default function SignUp({flashMessage}: SignUpProps) {
+    const navigate = useNavigate();
+    const [seePassword, setSeePassword] = useState(false);
 
-    const [userRegistrationFormData, setUserRegistrationFormData] = useState<UserRegistrationFormDataType>(
+    const [userRegistrationFormData, setUserRegistrationFormData] = useState<UserFormDataType>(
         {
             first_name:'',
             last_name:'',
@@ -30,10 +36,11 @@ export default function SignUp({}: SignUpProps) {
 
         let response = await register(userRegistrationFormData);
         if (response.error){
-            console.error(response.error);
+            flashMessage(response.error, 'danger');
         } else {
             let newUser = response.data!
-            console.log(`Congrats ${newUser.first_name} ${newUser.last_name} on creating your account!`)
+            flashMessage(`Congrats ${newUser.first_name} ${newUser.last_name}'s profile has been created!`, 'success')
+            navigate('/login');
         }
         
     }
@@ -57,11 +64,16 @@ export default function SignUp({}: SignUpProps) {
                     <Form.Control className='mb-2' id='email' name='email' type='email' placeholder='Enter Email' value={userRegistrationFormData.email} onChange={handleInputChange}/>
 
                     <Form.Label htmlFor='password'>Password</Form.Label>
-                    <Form.Control className='mb-2' id='password' type='password' name='password' placeholder='Enter Password' value={userRegistrationFormData.password} onChange={handleInputChange}/>
+                    <InputGroup>
+                        <Form.Control id='password' name='password' type={seePassword ? 'text' : 'password'} placeholder='Enter Password' value={userRegistrationFormData.password} onChange={handleInputChange}/>
+                        <InputGroup.Text onClick={() => setSeePassword(!seePassword)}><i className={seePassword ? "bi bi-eye-slash" : "bi bi-eye"}></i></InputGroup.Text>
+                    </InputGroup>
 
                     <Form.Label htmlFor='confirm_password'>Confirm Password</Form.Label>
-                    <Form.Control className='mb-2' id='confirm_password' type='password' name='confirm_password' placeholder='Confirm Password' value={userRegistrationFormData.confirm_password} onChange={handleInputChange}/>
-
+                    <InputGroup>
+                        <Form.Control id='confirm_password' name='confirm_password' type={seePassword ? 'text' : 'password'} placeholder='Confirm Password' value={userRegistrationFormData.confirm_password} onChange={handleInputChange}/>
+                        <InputGroup.Text onClick={() => setSeePassword(!seePassword)}><i className={seePassword ? "bi bi-eye-slash" : "bi bi-eye"}></i></InputGroup.Text>
+                    </InputGroup>
 
                     <Button disabled={disableSubmit} type='submit' variant='outline-primary' className='w-100 mt-3'>Register!</Button>
                 </Form>
